@@ -43,7 +43,7 @@ func LoadConfig(filePath string) (*Config, error) {
 	viper.SetConfigType("yaml") // Config file type (can be JSON, TOML, etc.)
 
 	// Optionally, you can also set environment variables prefix
-	viper.SetEnvPrefix("MYAPP")
+	viper.SetEnvPrefix("PRODUCT")
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
