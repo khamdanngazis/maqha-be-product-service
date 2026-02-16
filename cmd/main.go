@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -126,6 +127,13 @@ func main() {
 
 func initLogging(logFolder string) {
 	logging.InitLogger()
+
+	// Check if logging to stdout is enabled
+	if strings.EqualFold(os.Getenv("LOG_TO_STDOUT"), "true") {
+		logging.Log.SetOutput(os.Stdout)
+		return
+	}
+
 	if err := os.MkdirAll(logFolder, 0755); err != nil {
 		log.Fatal("Error creating log directory:", err)
 	}
