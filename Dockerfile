@@ -27,4 +27,4 @@ RUN mkdir -p /app/logs
 EXPOSE 8012
 
 ENTRYPOINT ["/app/product_service"]
-CMD ["-config", "cmd/config/config.yaml", "-log.file", "logs"]
+CMD ["-config", "/app/cmd/config/config.yaml", "-log.file", "/app/logs"]

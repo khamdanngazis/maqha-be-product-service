@@ -4,6 +4,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -35,7 +37,11 @@ type Config struct {
 // LoadConfig loads configuration from a specified file path, environment variables, and/or config files.
 func LoadConfig(filePath string) (*Config, error) {
 	if filePath != "" {
-		viper.SetConfigFile(filePath)
+		resolvedPath, err := resolveConfigPath(filePath)
+		if err != nil {
+			return nil, err
+		}
+		viper.SetConfigFile(resolvedPath)
 	} else {
 		viper.SetConfigName("config") // Config file name (without extension)
 		viper.AddConfigPath(".")      // Look for the config file in the current directory
@@ -62,4 +68,29 @@ func LoadConfig(filePath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func resolveConfigPath(filePath string) (string, error) {
+	if filePath == "" {
+		return "", nil
+	}
+
+	if _, err := os.Stat(filePath); err == nil {
+		return filePath, nil
+	} else if err != nil && !os.IsNotExist(err) {
+		return "", fmt.Errorf("error reading config file: %v", err)
+	}
+
+	execPath, err := os.Executable()
+	if err == nil {
+		execDir := filepath.Dir(execPath)
+		candidate := filepath.Join(execDir, filePath)
+		if _, statErr := os.Stat(candidate); statErr == nil {
+			return candidate, nil
+		} else if statErr != nil && !os.IsNotExist(statErr) {
+			return "", fmt.Errorf("error reading config file: %v", statErr)
+		}
+	}
+
+	return "", fmt.Errorf("error reading config file: open %s: no such file or directory", filePath)
 }
