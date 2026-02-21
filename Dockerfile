@@ -20,11 +20,10 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /bin/product_service /app/product_service
-COPY cmd/config /app/cmd/config
 
 RUN mkdir -p /app/logs
 
 EXPOSE 8012
 
 ENTRYPOINT ["/app/product_service"]
-CMD ["-config", "/app/cmd/config/config.yaml", "-log.file", "/app/logs"]
+CMD ["-log.file", "/app/logs"]

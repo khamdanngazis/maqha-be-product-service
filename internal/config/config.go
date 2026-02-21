@@ -63,11 +63,23 @@ func LoadConfig(filePath string) (*Config, error) {
 
 	config := &Config{}
 
-	// Unmarshal the configuration into the Config struct
-	// This will use values from config file (if present) or environment variables
-	if err := viper.Unmarshal(config); err != nil {
-		return nil, fmt.Errorf("error unmarshalling config: %v", err)
-	}
+	// Manually read from viper to ensure env vars override config file
+	config.Database.Host = viper.GetString("database.host")
+	config.Database.Port = viper.GetInt("database.port")
+	config.Database.User = viper.GetString("database.user")
+	config.Database.Password = viper.GetString("database.password")
+	config.Database.DBName = viper.GetString("database.dbname")
+	config.Database.Debug = viper.GetBool("database.debug")
+	config.AppPort = viper.GetString("appport")
+	config.GrpcPort = viper.GetString("grpcport")
+	config.ImagePath = viper.GetString("imagepath")
+	config.ExternalConnection.AuthService.Host = viper.GetString("externalconnection.authservice.host")
+
+	// Debug: print loaded config
+	fmt.Printf("DEBUG: Loaded config - Host: %s, Port: %d, User: %s, DBName: %s\n",
+		config.Database.Host, config.Database.Port, config.Database.User, config.Database.DBName)
+	fmt.Printf("DEBUG: AppPort: %s, ImagePath: %s, AuthHost: %s\n",
+		config.AppPort, config.ImagePath, config.ExternalConnection.AuthService.Host)
 
 	return config, nil
 }
