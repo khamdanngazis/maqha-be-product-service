@@ -59,6 +59,18 @@ func LoadConfig(filePath string) (*Config, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
+	// Explicitly bind env vars so Unmarshal picks them up even without a config file.
+	_ = viper.BindEnv("database.host")
+	_ = viper.BindEnv("database.port")
+	_ = viper.BindEnv("database.user")
+	_ = viper.BindEnv("database.password")
+	_ = viper.BindEnv("database.dbname")
+	_ = viper.BindEnv("database.debug")
+	_ = viper.BindEnv("appport")
+	_ = viper.BindEnv("grpcport")
+	_ = viper.BindEnv("imagepath")
+	_ = viper.BindEnv("externalconnection.authservice.host")
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("error reading config file: %v", err)
