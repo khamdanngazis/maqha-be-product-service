@@ -4,8 +4,6 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -37,16 +35,7 @@ type Config struct {
 // LoadConfig loads configuration from a specified file path, environment variables, and/or config files.
 func LoadConfig(filePath string) (*Config, error) {
 	if filePath != "" {
-		resolvedPath, err := resolveConfigPath(filePath)
-		if err != nil {
-			return nil, err
-		}
-		if resolvedPath != "" {
-			viper.SetConfigFile(resolvedPath)
-		} else {
-			viper.SetConfigName("config") // Config file name (without extension)
-			viper.AddConfigPath(".")      // Look for the config file in the current directory
-		}
+		viper.SetConfigFile(filePath)
 	} else {
 		viper.SetConfigName("config") // Config file name (without extension)
 		viper.AddConfigPath(".")      // Look for the config file in the current directory
@@ -59,56 +48,20 @@ func LoadConfig(filePath string) (*Config, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	// Explicitly bind env vars so Unmarshal picks them up even without a config file.
-	_ = viper.BindEnv("database.host")
-	_ = viper.BindEnv("database.port")
-	_ = viper.BindEnv("database.user")
-	_ = viper.BindEnv("database.password")
-	_ = viper.BindEnv("database.dbname")
-	_ = viper.BindEnv("database.debug")
-	_ = viper.BindEnv("appport")
-	_ = viper.BindEnv("grpcport")
-	_ = viper.BindEnv("imagepath")
-	_ = viper.BindEnv("externalconnection.authservice.host")
-
+	// Try to read config file; ignore if not found
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("error reading config file: %v", err)
+			// Log but don't fail on missing config file
 		}
 	}
 
 	config := &Config{}
 
 	// Unmarshal the configuration into the Config struct
+	// This will use values from config file (if present) or environment variables
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("error unmarshalling config: %v", err)
 	}
 
 	return config, nil
-}
-
-func resolveConfigPath(filePath string) (string, error) {
-	if filePath == "" {
-		return "", nil
-	}
-
-	if _, err := os.Stat(filePath); err == nil {
-		return filePath, nil
-	} else if err != nil && !os.IsNotExist(err) {
-		return "", fmt.Errorf("error reading config file: %v", err)
-	}
-
-	execPath, err := os.Executable()
-	if err == nil {
-		execDir := filepath.Dir(execPath)
-		candidate := filepath.Join(execDir, filePath)
-		if _, statErr := os.Stat(candidate); statErr == nil {
-			return candidate, nil
-		} else if statErr != nil && !os.IsNotExist(statErr) {
-			return "", fmt.Errorf("error reading config file: %v", statErr)
-		}
-	}
-
-	// Config file not found; allow env-only configuration.
-	return "", nil
 }
