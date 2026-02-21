@@ -29,8 +29,8 @@ import (
 
 func main() {
 	// Define a command line flag for the config file path
-	configFilePath := flag.String("config", "cmd/config/config.yaml", "path to the config file")
-	logFile := flag.String("log.file", "logs", "Logging file")
+	configFilePath := flag.String("config", "config/config.yaml", "path to the config file")
+	logFile := flag.String("log.file", "../logs", "Logging file")
 
 	flag.Parse()
 
@@ -85,57 +85,52 @@ func main() {
 	// Register gRPC service implementation
 	pb.RegisterProductServer(grpcServer, productHandlerGrpc)
 
-	// Set up the TCP listener on the shared port
+	// Create a TCP listener on the app port for both HTTP and gRPC
 	listener, err := net.Listen("tcp", cfg.AppPort)
 	if err != nil {
-		logging.Log.Fatalf("failed to listen: %v", err)
+		logging.Log.Fatalf("Error creating listener: %v", err)
 	}
 	defer listener.Close()
 
-	// Create a cmux instance
-	m := cmux.New(listener)
+	// Create a connection multiplexer
+	mux := cmux.New(listener)
 
-	// Match connections
-	httpL := m.Match(cmux.HTTP1Fast())
-	grpcL := m.MatchWithWriters(
-		cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
-	)
+	// Match connections based on protocol
+	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	httpListener := mux.Match(cmux.HTTP1Fast())
 
-	// Start HTTP server
-	httpServer := &http.Server{
-		Handler: httpRouter.Handler(),
-	}
+	// Start gRPC server on gRPC listener
 	go func() {
-		if err := httpServer.Serve(httpL); err != nil {
-			logging.Log.Fatalf("failed to serve HTTP: %v", err)
+		logging.Log.Infof("gRPC server listening on %s", cfg.AppPort)
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			logging.Log.Errorf("gRPC server error: %v", err)
 		}
 	}()
 
-	// Start gRPC server
+	// Start HTTP server on HTTP listener
 	go func() {
-		if err := grpcServer.Serve(grpcL); err != nil {
-			logging.Log.Fatalf("failed to serve gRPC: %v", err)
+		httpServer := &http.Server{
+			Handler: httpRouter.Handler(),
+		}
+		logging.Log.Infof("HTTP server listening on %s", cfg.AppPort)
+		if err := httpServer.Serve(httpListener); err != nil && err != http.ErrServerClosed {
+			logging.Log.Errorf("HTTP server error: %v", err)
 		}
 	}()
 
-	// Start cmux
-	logging.Log.Infof("HTTP and gRPC server listening on %s", cfg.AppPort)
-	if err := m.Serve(); err != nil {
-		logging.Log.Fatalf("failed to serve: %v", err)
+	// Start the multiplexer
+	logging.Log.Infof("Starting dual-protocol server (HTTP + gRPC) on %s", cfg.AppPort)
+	if err := mux.Serve(); err != nil {
+		logging.Log.Fatalf("Server error: %v", err)
 	}
 }
 
 func initLogging(logFolder string) {
 	logging.InitLogger()
 
-	// Check if logging to stdout is enabled
-	if strings.EqualFold(os.Getenv("LOG_TO_STDOUT"), "true") {
+	if strings.EqualFold(os.Getenv("PRODUCT_LOG_TO_STDOUT"), "true") {
 		logging.Log.SetOutput(os.Stdout)
 		return
-	}
-
-	if err := os.MkdirAll(logFolder, 0755); err != nil {
-		log.Fatal("Error creating log directory:", err)
 	}
 	currentDate := time.Now().Format("2006-01-02")
 
