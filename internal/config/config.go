@@ -19,17 +19,23 @@ type DatabaseConfig struct {
 	Debug    bool
 }
 
+// AuthServiceConfig holds the auth service configuration.
+type AuthServiceConfig struct {
+	Host string
+}
+
+// ExternalConnectionConfig holds external service configurations.
+type ExternalConnectionConfig struct {
+	AuthService AuthServiceConfig
+}
+
 // Config holds the application configuration.
 type Config struct {
 	Database           DatabaseConfig
-	ExternalConnection struct {
-		AuthService struct {
-			Host string
-		}
-	}
-	AppPort   string
-	GrpcPort  string
-	ImagePath string
+	ExternalConnection ExternalConnectionConfig
+	AppPort            string
+	GrpcPort           string
+	ImagePath          string
 }
 
 // LoadConfig loads configuration from a specified file path, environment variables, and/or config files.
