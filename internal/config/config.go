@@ -41,7 +41,12 @@ func LoadConfig(filePath string) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		viper.SetConfigFile(resolvedPath)
+		if resolvedPath != "" {
+			viper.SetConfigFile(resolvedPath)
+		} else {
+			viper.SetConfigName("config") // Config file name (without extension)
+			viper.AddConfigPath(".")      // Look for the config file in the current directory
+		}
 	} else {
 		viper.SetConfigName("config") // Config file name (without extension)
 		viper.AddConfigPath(".")      // Look for the config file in the current directory
@@ -92,5 +97,6 @@ func resolveConfigPath(filePath string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("error reading config file: open %s: no such file or directory", filePath)
+	// Config file not found; allow env-only configuration.
+	return "", nil
 }
