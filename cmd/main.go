@@ -72,11 +72,11 @@ func main() {
 
 	httpRouter.GET("/product", productHandler.GetProductGroupsByCategoryHandler)
 	httpRouter.POST("/product", productHandler.AddProductHandler)
-	httpRouter.PUT("/product", productHandler.EditProductHandler)
-	httpRouter.DELETE("/product", productHandler.DeactiveProductHandler)
+	httpRouter.PUT("/product/{productID}", productHandler.EditProductHandler)
+	httpRouter.DELETE("/product/{productID}", productHandler.DeactiveProductHandler)
 	httpRouter.POST("/category", productHandler.AddCategoryHandler)
-	httpRouter.PUT("/category", productHandler.EditCategoryHandler)
-	httpRouter.DELETE("/category", productHandler.DeactiveCategoryHandler)
+	httpRouter.PUT("/category/{categoryID}", productHandler.EditCategoryHandler)
+	httpRouter.DELETE("/category/{categoryID}", productHandler.DeactiveCategoryHandler)
 
 	productHandlerGrpc := grpcHandler.NewProductGRPCHandler(productService)
 	// Initialize gRPC server
