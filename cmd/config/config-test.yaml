@@ -10,6 +10,7 @@ database:
 externalconnection:
   authservice:
     host: localhost:50051
+    usetls: false  # Set to false for local development, true for production (port 443)
 appport: :8011
 grpcport: :50052
 imagepath: "../../public/images" 

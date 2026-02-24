@@ -64,7 +64,7 @@ func main() {
 	httpRouter.GET("/ping", pingHandler.Ping)
 
 	// Initialize product service
-	userRepository := exRepo.NewUserRepository(cfg.ExternalConnection.AuthService.Host)
+	userRepository := exRepo.NewUserRepository(cfg.ExternalConnection.AuthService.Host, cfg.ExternalConnection.AuthService.UseTLS)
 	imageRepository := repository.NewImagesRepository(cfg.ImagePath)
 	productRepository := repository.NewProductRepository(db)
 	productService := service.NewProductService(productRepository, userRepository, imageRepository)

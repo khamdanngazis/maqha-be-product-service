@@ -21,7 +21,8 @@ type DatabaseConfig struct {
 
 // AuthServiceConfig holds the auth service configuration.
 type AuthServiceConfig struct {
-	Host string
+	Host   string
+	UseTLS bool
 }
 
 // ExternalConnectionConfig holds external service configurations.
@@ -74,12 +75,17 @@ func LoadConfig(filePath string) (*Config, error) {
 	config.GrpcPort = viper.GetString("grpcport")
 	config.ImagePath = viper.GetString("imagepath")
 	config.ExternalConnection.AuthService.Host = viper.GetString("externalconnection.authservice.host")
+	config.ExternalConnection.AuthService.UseTLS = viper.GetBool("externalconnection.authservice.usetls")
 
 	// Debug: print loaded config
 	fmt.Printf("DEBUG: Loaded config - Host: %s, Port: %d, User: %s, DBName: %s\n",
 		config.Database.Host, config.Database.Port, config.Database.User, config.Database.DBName)
 	fmt.Printf("DEBUG: AppPort: %s, ImagePath: %s, AuthHost: %s\n",
 		config.AppPort, config.ImagePath, config.ExternalConnection.AuthService.Host)
+	fmt.Printf("DEBUG: *** UseTLS RAW from Viper: %v (IsSet: %v) ***\n",
+		viper.Get("externalconnection.authservice.usetls"), viper.IsSet("externalconnection.authservice.usetls"))
+	fmt.Printf("DEBUG: *** UseTLS in Config: %t ***\n",
+		config.ExternalConnection.AuthService.UseTLS)
 
 	return config, nil
 }
